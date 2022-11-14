@@ -23,11 +23,12 @@
 
 .circle {
   position: fixed;
-  width: 100px;
-  height: 100px;
+  width: 10px;
+  height: 10px;
   border: 1px #fff solid;
   border-radius: 50%;
   z-index: -1;
+  background-color: #fff;
 }
 
 .narrow-container {

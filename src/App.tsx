@@ -1,16 +1,44 @@
-import { useState, MouseEventHandler } from "react";
+import {
+  useState,
+  MouseEventHandler,
+  useEffect,
+  TouchEventHandler,
+} from "react";
 import UndoIcon from "@mui/icons-material/Undo";
 import RedoIcon from "@mui/icons-material/Redo";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { Circle } from "@mui/icons-material";
 
 type Circle = {
   x: number;
   y: number;
 };
 
+const getCircles = (): Circle[] => {
+  const circles: Circle[] = [];
+  if (localStorage.getItem("circles")) {
+    circles.push(...JSON.parse(localStorage.getItem("circles") as string));
+  }
+  return circles;
+};
+
+const getUndoCircles = (): Circle[] => {
+  const circles: Circle[] = [];
+  if (localStorage.getItem("undo-circles")) {
+    circles.push(...JSON.parse(localStorage.getItem("undo-circles") as string));
+  }
+  return circles;
+};
+
 function App() {
-  const [circles, setCircles] = useState<Circle[]>([]);
-  const [undoCircles, setUndoCircles] = useState<Circle[]>([]);
+  const [circles, setCircles] = useState<Circle[]>(getCircles());
+  const [undoCircles, setUndoCircles] = useState<Circle[]>(getUndoCircles());
+  const [mouseDown, setMouseDown] = useState<Boolean>(false);
+
+  useEffect(() => {
+    localStorage.setItem("circles", JSON.stringify(circles));
+    localStorage.setItem("undo-circles", JSON.stringify(undoCircles));
+  }, [circles, undoCircles]);
 
   const removeLastCircle = () => {
     const lastCircleIndex = circles.length - 1;
@@ -34,13 +62,43 @@ function App() {
   };
 
   const onCircleAdd: MouseEventHandler<HTMLDivElement> = (event) => {
-    const xCircle = event.clientX;
-    const yCircle = event.clientY;
-    const newCircle: Circle = { x: xCircle, y: yCircle };
-    setUndoCircles([]);
-    setCircles((prevState) => {
-      return [...(prevState as Circle[]).concat(newCircle)];
-    });
+    if (mouseDown || event.type === "click") {
+      const xCircle = event.clientX;
+      const yCircle = event.clientY;
+      const newCircle: Circle = { x: xCircle, y: yCircle };
+      setUndoCircles([]);
+      setCircles((prevState) => {
+        return [...(prevState as Circle[]).concat(newCircle)];
+      });
+    }
+  };
+
+  const onCircleAddMobile: TouchEventHandler<HTMLDivElement> = (event) => {
+    if (mouseDown || event.type === "click") {
+      const xCircle = event.changedTouches[0].clientX;
+      const yCircle = event.changedTouches[0].clientY;
+      const newCircle: Circle = { x: xCircle, y: yCircle };
+      setUndoCircles([]);
+      setCircles((prevState) => {
+        return [...(prevState as Circle[]).concat(newCircle)];
+      });
+    }
+  };
+
+  const onDrawStart: MouseEventHandler<HTMLDivElement> = (event) => {
+    setMouseDown(true);
+  };
+
+  const onDrawStartMobile: TouchEventHandler<HTMLDivElement> = (event) => {
+    setMouseDown(true);
+  };
+
+  const onDrawStop: MouseEventHandler<HTMLDivElement> = (event) => {
+    setMouseDown(false);
+  };
+
+  const onDrawStopMobile: TouchEventHandler<HTMLDivElement> = (event) => {
+    setMouseDown(false);
   };
 
   const undoColor = circles.length ? "action" : "disabled";
@@ -72,13 +130,22 @@ function App() {
           color={redoColor}
         />
       </header>
-      <div className="circle-container" onClick={onCircleAdd}>
+      <div
+        className="circle-container"
+        onClick={onCircleAdd}
+        onMouseDown={onDrawStart}
+        onMouseUp={onDrawStop}
+        onMouseMove={onCircleAdd}
+        onTouchStart={onDrawStartMobile}
+        onTouchEnd={onDrawStopMobile}
+        onTouchMove={onCircleAddMobile}
+      >
         {circles.map((circle, index) => {
           return (
             <div
               key={index}
               className="circle"
-              style={{ top: circle.y - 50, left: circle.x - 50 }}
+              style={{ top: circle.y - 5, left: circle.x - 5 }}
             ></div>
           );
         })}
