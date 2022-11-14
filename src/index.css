@@ -41,6 +41,7 @@
 
 .circle-container {
   height: 80vh;
+  touch-action: none;
 }
 
 .undo,
